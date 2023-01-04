@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { emit, Event, listen } from '@tauri-apps/api/event';
+import { Event, listen } from '@tauri-apps/api/event';
 import { readTextFile, writeTextFile } from '@tauri-apps/api/fs';
 import { configDir } from '@tauri-apps/api/path';
 import { confirm } from '@tauri-apps/api/dialog';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, nextTick } from 'vue';
 import { invoke } from "@tauri-apps/api/tauri";
 
 let vAppConfigPath: string
@@ -22,6 +22,8 @@ const vServerPath = ref('');
 const vServerStreamSecurity = ref('');
 const vServerAllowInsecure = ref('');
 const vServerAlpn = ref('');
+
+const vAppConfigPort = ref(7890);
 
 interface Payload {
   m_type: number,
@@ -69,7 +71,7 @@ interface AppConfig {
 /* backend */
 
 async function vConnect() {
-  await invoke("v2ray_connect");
+  await invoke("v2ray_connect", { path: vConfigPath });
 }
 
 async function vDisconnect() {
@@ -78,7 +80,231 @@ async function vDisconnect() {
 
 /* frontend */
 
+async function v2rayConfig() {
+  if (!vServerSelect.value || vServerSelect.value.selectedIndex < 0) {
+    return;
+  }
+  let server = vServers.value[vServerSelect.value.selectedIndex];
+  let config = {
+    "policy": {
+      "system": {
+        "statsOutboundUplink": true,
+        "statsOutboundDownlink": true
+      }
+    },
+    "log": {
+      "access": "",
+      "error": "",
+      "loglevel": "warning"
+    },
+    "inbounds": [
+      {
+        "tag": "socks",
+        "port": vAppConfig.inbound[0].localPort,
+        "listen": "127.0.0.1",
+        "protocol": "socks",
+        "sniffing": {
+          "enabled": true,
+          "destOverride": [
+            "http",
+            "tls"
+          ]
+        },
+        "settings": {
+          "auth": "noauth",
+          "udp": true,
+          "allowTransparent": false
+        }
+      },
+      {
+        "tag": "http",
+        "port": vAppConfig.inbound[0].localPort + 1,
+        "listen": "127.0.0.1",
+        "protocol": "http",
+        "sniffing": {
+          "enabled": true,
+          "destOverride": [
+            "http",
+            "tls"
+          ]
+        },
+        "settings": {
+          "auth": "noauth",
+          "udp": true,
+          "allowTransparent": false
+        }
+      },
+      {
+        "tag": "socks2",
+        "port": vAppConfig.inbound[0].localPort + 2,
+        "listen": "0.0.0.0",
+        "protocol": "socks",
+        "sniffing": {
+          "enabled": true,
+          "destOverride": [
+            "http",
+            "tls"
+          ]
+        },
+        "settings": {
+          "auth": "noauth",
+          "udp": true,
+          "allowTransparent": false
+        }
+      },
+      {
+        "tag": "http2",
+        "port": vAppConfig.inbound[0].localPort + 3,
+        "listen": "0.0.0.0",
+        "protocol": "http",
+        "sniffing": {
+          "enabled": true,
+          "destOverride": [
+            "http",
+            "tls"
+          ]
+        },
+        "settings": {
+          "auth": "noauth",
+          "udp": true,
+          "allowTransparent": false
+        }
+      },
+      {
+        "tag": "api",
+        "port": 49723,
+        "listen": "127.0.0.1",
+        "protocol": "dokodemo-door",
+        "settings": {
+          "udp": false,
+          "address": "127.0.0.1",
+          "allowTransparent": false
+        }
+      }
+    ],
+    "outbounds": [
+      {
+        "tag": "proxy",
+        "protocol": "vless",
+        "settings": {
+          "vnext": [
+            {
+              "address": server.address,
+              "port": server.port,
+              "users": [
+                {
+                  "id": server.id,
+                  "alterId": server.alterId,
+                  "email": "t@t.tt",
+                  "security": "auto",
+                  "encryption": "none",
+                  "flow": ""
+                }
+              ]
+            }
+          ]
+        },
+        "streamSettings": {
+          "network": server.network,
+          "security": server.streamSecurity,
+          "tlsSettings": {
+            "allowInsecure": server.allowInsecure === "true",
+            "alpn": server.alpn
+          },
+          "wsSettings": {
+            "path": server.path
+          }
+        },
+        "mux": {
+          "enabled": false,
+          "concurrency": -1
+        }
+      },
+      {
+        "tag": "direct",
+        "protocol": "freedom",
+        "settings": {}
+      },
+      {
+        "tag": "block",
+        "protocol": "blackhole",
+        "settings": {
+          "response": {
+            "type": "http"
+          }
+        }
+      }
+    ],
+    "stats": {},
+    "api": {
+      "tag": "api",
+      "services": [
+        "StatsService"
+      ]
+    },
+    "routing": {
+      "domainStrategy": "IPIfNonMatch",
+      "domainMatcher": "linear",
+      "rules": [
+        {
+          "type": "field",
+          "inboundTag": [
+            "api"
+          ],
+          "outboundTag": "api",
+          "enabled": true
+        },
+        {
+          "type": "field",
+          "inboundTag": [],
+          "outboundTag": "direct",
+          "domain": [
+            "domain:example-example.com",
+            "domain:example-example2.com"
+          ],
+          "enabled": true
+        },
+        {
+          "type": "field",
+          "inboundTag": [],
+          "outboundTag": "block",
+          "domain": [
+            "geosite:category-ads-all"
+          ],
+          "enabled": true
+        },
+        {
+          "type": "field",
+          "outboundTag": "direct",
+          "domain": [
+            "geosite:cn"
+          ],
+          "enabled": true
+        },
+        {
+          "type": "field",
+          "outboundTag": "direct",
+          "ip": [
+            "geoip:private",
+            "geoip:cn"
+          ],
+          "enabled": true
+        },
+        {
+          "type": "field",
+          "port": "0-65535",
+          "outboundTag": "proxy",
+          "enabled": true
+        }
+      ]
+    }
+  };
+
+  await writeTextFile(vConfigPath, JSON.stringify(config));
+}
+
 async function v2rayConnect() {
+  await v2rayConfig();
   await vConnect();
 }
 
@@ -86,13 +312,49 @@ async function v2rayDisconnect() {
   await vDisconnect();
 }
 
-function serverAdd() {
-
+async function serverAdd() {
+  vServers.value.push({
+    "indexId": Date.parse(new Date().toString()).toString(),
+    "configType": 5,
+    "configVersion": 2,
+    "sort": 0,
+    "address": "",
+    "port": 443,
+    "id": "",
+    "alterId": 0,
+    "security": "none",
+    "network": "",
+    "remarks": "Unnamed",
+    "headerType": "",
+    "requestHost": "",
+    "path": "",
+    "streamSecurity": "",
+    "allowInsecure": "",
+    "testResult": "",
+    "subid": "",
+    "flow": "",
+    "sni": "",
+    "alpn": [
+      ""
+    ],
+    "groupId": "",
+    "coreType": 2,
+    "preSocksPort": 0
+  });
+  if (vServerSelect.value) {
+    await nextTick();
+    vServerSelect.value.selectedIndex = vServers.value.length - 1;
+    onSelectedServerChanged();
+  }
 }
 
 async function serverRemove() {
-  if (await confirm("Really?")) {
-
+  if (await confirm("Really?") && vServerSelect.value) {
+    let index = vServerSelect.value.selectedIndex;
+    vServers.value.splice(index, 1);
+    await nextTick();
+    vServerSelect.value.selectedIndex = Math.max(0, index - 1);
+    onSelectedServerChanged();
   }
 }
 
@@ -105,14 +367,32 @@ function onSelectedServerChanged() {
   vServerAddress.value = vmessItem.address;
   vServerPort.value = vmessItem.port;
   vServerId.value = vmessItem.id;
+  vServerPath.value = vmessItem.path;
+  vServerNetwork.value = vmessItem.network;
+  vServerStreamSecurity.value = vmessItem.streamSecurity;
+  vServerAllowInsecure.value = vmessItem.allowInsecure;
+  vServerAlpn.value = vmessItem.alpn[0];
 }
 
 async function applyServerConfig() {
-
+  if (vServerSelect.value && vServerSelect.value.selectedIndex >= 0) {
+    let vmessItem = vServers.value[vServerSelect.value.selectedIndex];
+    vmessItem.remarks = vServerRemarks.value;
+    vmessItem.address = vServerAddress.value;
+    vmessItem.port = vServerPort.value;
+    vmessItem.id = vServerId.value;
+    vmessItem.path = vServerPath.value;
+    vmessItem.network = vServerNetwork.value;
+    vmessItem.streamSecurity = vServerStreamSecurity.value;
+    vmessItem.allowInsecure = vServerAllowInsecure.value;
+    vmessItem.alpn = [vServerAlpn.value];
+    await writeTextFile(vAppConfigPath, JSON.stringify(vAppConfig));
+  }
 }
 
-function applyAppConfig() {
-
+async function applyAppConfig() {
+  vAppConfig.inbound[0].localPort = Math.floor(vAppConfigPort.value);
+  await writeTextFile(vAppConfigPath, JSON.stringify(vAppConfig));
 }
 
 function serverSelect() {
@@ -121,6 +401,7 @@ function serverSelect() {
     vServerSelect.value.selectedIndex = index;
     console.log("findIndex", vServerSelect.value.selectedIndex);
   }
+  onSelectedServerChanged();
 }
 
 function serverFind(indexId: string) {
@@ -130,7 +411,7 @@ function serverFind(indexId: string) {
 }
 
 onMounted(async () => {
-  const unlisten_logging = listen('v-logging', (event: Event<Payload>) => {
+  listen('v-logging', (event: Event<Payload>) => {
     let colors = ["black", "orange", "red"];
     const { m_type, message } = event.payload;
     let log = `<p style="color:${colors[m_type]};">${message}</p>`;
@@ -151,6 +432,8 @@ onMounted(async () => {
   vAppConfig = JSON.parse(vConfigContent);
 
   vServers.value = vAppConfig.vmess;
+  vAppConfigPort.value = vAppConfig.inbound[0].localPort;
+  await nextTick();
   serverSelect();
 });
 </script>
@@ -158,7 +441,7 @@ onMounted(async () => {
 <template>
   <div class="grid-container">
     <div class="box0">
-      <button id="v-undo" style="width: 20px;">&lt;</button>
+      <button id="v-undo" style="width: 20px;" @click="v2rayConfig">&lt;</button>
       <button id="v-rmv-server" style="width: 20px;" @click="serverRemove">-</button>
       <button id="v-add-server" style="width: 20px;" @click="serverAdd">+</button>
       <button id="v-disconnect" @click="v2rayDisconnect" style="width: 85px;">disconnect</button>
@@ -167,7 +450,7 @@ onMounted(async () => {
 
     <div class="box1">
       <select class="servers" ref="vServerSelect" @change="onSelectedServerChanged" id="v-server-select"
-        contenteditable="false" multiple>
+        contenteditable="false" size="2">
         <option v-for="item in vServers" :key="item.indexId" :value="item.indexId">
           {{ item.remarks }}
         </option>
@@ -227,7 +510,7 @@ onMounted(async () => {
         <div class="panel">
           <div class="settings">
             <label>本地监听端口</label>
-            <input type="text" id="v-config-port" />
+            <input type="text" id="v-app-config-port" v-model="vAppConfigPort" />
           </div>
           <button id="v-config-apply" @click="applyAppConfig">apply</button>
         </div>

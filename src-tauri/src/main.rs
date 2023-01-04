@@ -3,17 +3,13 @@
     windows_subsystem = "windows"
 )]
 
-mod config;
-mod v2ray_config;
 mod v2ray_handler;
 
-use serde_json;
 use std::{
     fs::{self, OpenOptions},
     io::{self, Read, Write},
 };
 use tauri::{Manager, RunEvent, State, Window};
-use v2ray_config::V2rayConfig;
 use v2ray_handler::V2rayHandler;
 
 #[derive(Clone, serde::Serialize)]
@@ -22,15 +18,9 @@ struct Payload {
     message: String,
 }
 
-fn load_v2ray_config() -> std::io::Result<V2rayConfig> {
-    let content = fs::read_to_string("config.json")?;
-    let config: V2rayConfig = serde_json::from_str(&content)?;
-    Ok(config)
-}
-
 #[tauri::command]
-fn v2ray_connect(state: State<'_, V2rayHandler>, window: Window) {
-    state.start(window);
+fn v2ray_connect(state: State<'_, V2rayHandler>, window: Window, path: String) {
+    state.start(window, path);
 }
 
 #[tauri::command]
@@ -61,11 +51,9 @@ fn write_file(path: String, content: String) -> Result<(), String> {
 }
 
 fn main() {
-    // let v_config = load_v2ray_config().expect("Invalid v2ray config.");
     let v_handler = V2rayHandler::new();
 
     tauri::Builder::default()
-        // .manage(v_config)
         .manage(v_handler)
         .invoke_handler(tauri::generate_handler![
             v2ray_connect,
@@ -77,7 +65,7 @@ fn main() {
         .expect("error while building tauri application")
         .run(|app_handle, event| match event {
             RunEvent::Ready => {}
-            RunEvent::ExitRequested { api, .. } => {
+            RunEvent::ExitRequested { .. } => {
                 let s: State<V2rayHandler> = app_handle.state();
                 let _ = s.stop();
             }

@@ -38,9 +38,9 @@ impl V2rayHandler {
         }
     }
 
-    pub fn load() {}
+    // pub fn load() {}
 
-    pub fn start(&self, window: Window) {
+    pub fn start(&self, window: Window, path: String) {
         let mut lock = self.process.lock().unwrap();
 
         if !lock.is_none() {
@@ -48,6 +48,8 @@ impl V2rayHandler {
         }
 
         let mut p = Command::new("./xray/xray")
+            .arg("-config")
+            .arg(path)
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()

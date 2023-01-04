@@ -2,5 +2,3 @@
 # will have compiled files and executables
 /target/
 /xray/
-config.json
-app_config.json
