@@ -16,6 +16,29 @@
       "shell": {
         "all": false,
         "open": true
+      },
+      "dialog": {
+        "all": true,
+        "open": true,
+        "save": true
+      },
+      "fs": {
+        "all": true,
+        "readFile": true,
+        "writeFile": true,
+        "readDir": true,
+        "copyFile": true,
+        "createDir": true,
+        "removeDir": true,
+        "removeFile": true,
+        "renameFile": true,
+        "exists": true,
+        "scope": [
+          "$CONFIG/vtauray/*"
+        ]
+      },
+      "path": {
+        "all": true
       }
     },
     "bundle": {
@@ -60,10 +83,8 @@
     "windows": [
       {
         "fullscreen": false,
-        "height": 600,
-        "resizable": false,
+        "resizable": true,
         "title": "vtauray",
-        "width": 800,
         "minWidth": 800,
         "minHeight": 600
       }
