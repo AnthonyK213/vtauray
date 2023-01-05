@@ -618,7 +618,7 @@ button {
   margin-left: auto;
   margin-right: auto;
   display: block;
-  border-radius: 0px;
+  border-radius: 5px;
   border-color: lightgray;
 }
 
@@ -630,6 +630,8 @@ button {
   overflow: scroll;
   resize: none;
   background: white;
+  border-width: 1px;
+  outline-style: unset;
 }
 
 .server-input {
