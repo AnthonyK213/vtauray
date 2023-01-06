@@ -15,8 +15,8 @@ struct Payload {
 }
 
 #[tauri::command]
-fn v2ray_connect(state: State<'_, V2rayHandler>, window: Window, path: String) {
-    state.start(window, path);
+fn v2ray_connect(state: State<'_, V2rayHandler>, window: Window, path: String) -> Result<(), String> {
+    state.start(window, path)
 }
 
 #[tauri::command]

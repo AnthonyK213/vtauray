@@ -4,7 +4,7 @@ use std::{
     sync::{Arc, Mutex},
     thread,
 };
-use tauri::window::Window;
+use tauri::{api, window::Window, utils::config};
 
 use crate::Payload;
 
@@ -40,20 +40,30 @@ impl V2rayHandler {
 
     // pub fn load() {}
 
-    pub fn start(&self, window: Window, path: String) {
+    pub fn start(&self, window: Window, path: String) -> Result<(), String> {
         let mut lock = self.process.lock().unwrap();
 
         if !lock.is_none() {
             let _ = lock.take().unwrap().kill();
         }
 
-        let mut p = Command::new("./xray/xray")
+        let mut xray_path = api::path::config_dir().ok_or_else(|| {
+            let _ = emit_logging(&window, 2, "Configuration directory does not exist".to_string());
+            "Configuration directory does not exist".to_string()
+        })?;
+        
+        xray_path.push("vtauray/xray/xray".to_string());
+
+        let mut p = Command::new(xray_path.as_os_str())
             .arg("-config")
             .arg(path)
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
-            .expect("Failed to launch v2ray");
+            .map_err(|e| {
+                let _ = emit_logging(&window, 2, "Failed to start the xray core".into());
+                e.to_string()
+            })?;
 
         let mut child_out = p.stdout.take().unwrap();
         let mut child_err = p.stderr.take().unwrap();
@@ -62,11 +72,21 @@ impl V2rayHandler {
 
         let win_out = window.clone();
         let mut buf_out = [0; 1024];
+        let mut out_err_count = 0;
 
         thread::spawn(move || loop {
-            let mut size_out = child_out.read(&mut buf_out).expect("Stdout failure");
+            let mut size_out = child_out.read(&mut buf_out).unwrap_or_else(|e| {
+                let _ = emit_logging(&win_out, 2, e.to_string());
+                out_err_count += 1;
+                99999999
+            });
 
-            if size_out == 0 {
+            if out_err_count == 10 {
+                let _ = emit_logging(&win_out, 2, "Too many stdout errors, stopped.".into());
+                break;
+            } else if size_out == 99999999 {
+                continue;
+            } else if size_out == 0 {
                 #[cfg(debug_assertions)]
                 let _ = emit_logging(&win_out, 1, "Stdout stopped".into());
                 break;
@@ -103,6 +123,8 @@ impl V2rayHandler {
                 String::from_utf8_lossy(&buf_err[0..size_err]).into(),
             );
         });
+
+        Ok(())
     }
 
     pub fn stop(&self) -> Result<(), String> {

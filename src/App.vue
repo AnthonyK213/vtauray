@@ -71,7 +71,7 @@ interface AppConfig {
 /* backend */
 
 async function vConnect() {
-  await invoke("v2ray_connect", { path: vConfigPath });
+  await invoke("v2ray_connect", { path: vConfigPath }).catch((e) => console.log(e));
 }
 
 async function vDisconnect() {
@@ -399,7 +399,6 @@ function serverSelect() {
   if (vServerSelect.value != null) {
     let index = vServers.value.findIndex((element) => element.indexId == vAppConfig.indexId);
     vServerSelect.value.selectedIndex = index;
-    console.log("findIndex", vServerSelect.value.selectedIndex);
   }
   onSelectedServerChanged();
 }
