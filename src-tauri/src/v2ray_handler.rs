@@ -51,7 +51,7 @@ impl V2rayHandler {
             let _ = emit_logging(&window, 2, "Configuration directory does not exist".to_string());
             "Configuration directory does not exist".to_string()
         })?;
-        
+
         xray_path.push("vtauray/xray/xray".to_string());
 
         let mut p = Command::new(xray_path.as_os_str())
