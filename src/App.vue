@@ -414,7 +414,7 @@ onMounted(async () => {
     let colors = ["black", "orange", "red"];
     const { m_type, message } = event.payload;
     let log = `<p style="color:${colors[m_type]};">${message}</p>`;
-    if (vLogging.value === null) return;
+    if (vLogging.value == null) return;
     if (vLogging.value.innerHTML.length >= 65001) {
       vLogging.value.innerHTML = log;
     } else {
@@ -424,7 +424,7 @@ onMounted(async () => {
   });
 
   const configDirectory = (await configDir()) + "vtauray/";
-  vAppConfigPath = configDirectory + "app_config.json";
+  vAppConfigPath = configDirectory + "guiNConfig.json";
   vConfigPath = configDirectory + "config.json";
 
   let vConfigContent = await readTextFile(vAppConfigPath);

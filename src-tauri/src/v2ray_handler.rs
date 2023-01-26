@@ -4,7 +4,7 @@ use std::{
     sync::{Arc, Mutex},
     thread,
 };
-use tauri::{api, window::Window, utils::config};
+use tauri::{api, window::Window};
 
 use crate::Payload;
 
