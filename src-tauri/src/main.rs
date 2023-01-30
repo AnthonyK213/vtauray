@@ -7,7 +7,7 @@ mod v2ray_handler;
 
 use tauri::{
     CustomMenuItem, Manager, RunEvent, State, SystemTray, SystemTrayEvent, SystemTrayMenu, Window,
-    WindowEvent,
+    WindowEvent, SystemTrayMenuItem,
 };
 use v2ray_handler::V2rayHandler;
 
@@ -35,8 +35,11 @@ fn main() {
     let v_handler = V2rayHandler::new();
 
     let tray_menu = SystemTrayMenu::new()
+        .add_item(CustomMenuItem::new("show".to_string(), "Show"))
+        .add_native_item(SystemTrayMenuItem::Separator)
         .add_item(CustomMenuItem::new("connect".to_string(), "Connect"))
         .add_item(CustomMenuItem::new("disconnect".to_string(), "Disconnect"))
+        .add_native_item(SystemTrayMenuItem::Separator)
         .add_item(CustomMenuItem::new("quit".to_string(), "Quit"));
     let system_tray = SystemTray::new().with_menu(tray_menu);
 
@@ -50,12 +53,14 @@ fn main() {
             SystemTrayEvent::MenuItemClick { id, .. } => {
                 let s: State<V2rayHandler> = app_handle.state();
                 match id.as_str() {
-                    "connect" => {},
+                    "show" => {
+                        app_handle.get_window("main").unwrap().show().unwrap();
+                    }
+                    "connect" => {}
                     "disconnect" => {
                         let _ = s.stop();
-                    },
+                    }
                     "quit" => {
-                        let _ = s.stop();
                         app_handle.exit(0);
                     }
                     _ => {}
@@ -77,6 +82,9 @@ fn main() {
                 }
                 _ => {}
             },
+            RunEvent::ExitRequested { .. } => {
+                let _ = app_handle.state::<V2rayHandler>().stop();
+            }
             _ => {}
         });
 }
