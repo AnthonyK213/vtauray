@@ -5,30 +5,10 @@ use std::{
     thread,
 };
 use tauri::{api, window::Window};
-
-use crate::Payload;
+use crate::util::emit_logging;
 
 pub struct V2rayHandler {
     process: Arc<Mutex<Option<Child>>>,
-}
-
-fn escape_html(string: String) -> String {
-    string
-        .replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-        .replace("\"", "&quot;")
-        .replace("'", "&#039;")
-}
-
-fn emit_logging(window: &Window, m_type: u8, message: String) -> tauri::Result<()> {
-    window.emit(
-        "v-logging",
-        Payload {
-            m_type,
-            message: escape_html(message),
-        },
-    )
 }
 
 impl V2rayHandler {
@@ -38,9 +18,7 @@ impl V2rayHandler {
         }
     }
 
-    // pub fn load() {}
-
-    pub fn start(&self, window: Window, path: String) -> Result<(), String> {
+    pub fn start(&self, window: &Window, path: String) -> Result<(), String> {
         let mut lock = self.process.lock().unwrap();
 
         if !lock.is_none() {
@@ -48,7 +26,11 @@ impl V2rayHandler {
         }
 
         let mut xray_path = api::path::config_dir().ok_or_else(|| {
-            let _ = emit_logging(&window, 2, "Configuration directory does not exist".to_string());
+            let _ = emit_logging(
+                window,
+                2,
+                "Configuration directory does not exist".to_string(),
+            );
             "Configuration directory does not exist".to_string()
         })?;
 
@@ -61,7 +43,7 @@ impl V2rayHandler {
             .stderr(Stdio::piped())
             .spawn()
             .map_err(|e| {
-                let _ = emit_logging(&window, 2, "Failed to start the xray core".into());
+                let _ = emit_logging(window, 2, "Failed to start the xray core".into());
                 e.to_string()
             })?;
 
@@ -78,13 +60,13 @@ impl V2rayHandler {
             let mut size_out = child_out.read(&mut buf_out).unwrap_or_else(|e| {
                 let _ = emit_logging(&win_out, 2, e.to_string());
                 out_err_count += 1;
-                99999999
+                usize::MAX
             });
 
             if out_err_count == 10 {
                 let _ = emit_logging(&win_out, 2, "Too many stdout errors, stopped.".into());
                 break;
-            } else if size_out == 99999999 {
+            } else if size_out == usize::MAX {
                 continue;
             } else if size_out == 0 {
                 #[cfg(debug_assertions)]

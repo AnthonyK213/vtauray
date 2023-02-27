@@ -349,7 +349,7 @@ async function serverAdd() {
 }
 
 async function serverRemove() {
-  if (await confirm("Really?") && vServerSelect.value) {
+  if (await confirm("Confirmed to remove the server?") && vServerSelect.value) {
     let index = vServerSelect.value.selectedIndex;
     vServers.value.splice(index, 1);
     await nextTick();
@@ -439,7 +439,7 @@ onMounted(async () => {
 
 <template>
   <div class="grid-container">
-    <div class="box0">
+    <div class="div-helm">
       <button id="v-undo" style="width: 20px;" @click="v2rayConfig">&lt;</button>
       <button id="v-rmv-server" style="width: 20px;" @click="serverRemove">-</button>
       <button id="v-add-server" style="width: 20px;" @click="serverAdd">+</button>
@@ -447,7 +447,7 @@ onMounted(async () => {
       <button id="v-connect" @click="v2rayConnect" style="width: 80px;">connect</button>
     </div>
 
-    <div class="box1">
+    <div class="div-server-list">
       <select class="servers" ref="vServerSelect" @change="onSelectedServerChanged" id="v-server-select"
         contenteditable="false" size="2">
         <option v-for="item in vServers" :key="item.indexId" :value="item.indexId">
@@ -456,7 +456,7 @@ onMounted(async () => {
       </select>
     </div>
 
-    <div class="box2">
+    <div class="div-dashboard">
       <div class="tabs">
         <input class="input" name="tabs" type="radio" id="tab-1" checked />
         <label class="label" for="tab-1">vtauray</label>
@@ -516,7 +516,7 @@ onMounted(async () => {
       </div>
     </div>
 
-    <div class="box3">
+    <div class="div-logging">
       <div class="logging" id="v-logging" ref="vLogging" contenteditable="false">
         <p style="color: orange;">
           Hello, vtauray!
@@ -524,7 +524,7 @@ onMounted(async () => {
       </div>
     </div>
 
-    <div class="box4">
+    <div class="div-status-line">
       <p style="color: black;">
         Status Bar
       </p>
@@ -558,18 +558,18 @@ onMounted(async () => {
   height: 100vh;
 }
 
-.box0 {
+.div-helm {
   grid-column: 1 / 2;
   grid-row: 3 / 4;
   align-items: stretch;
 }
 
-.box1 {
+.div-server-list {
   grid-column: 1 / 2;
   grid-row: 1 / 3;
 }
 
-.box2 {
+.div-dashboard {
   grid-column: 2 / 3;
   grid-row: 1 / 2;
   border: lightgray;
@@ -578,7 +578,7 @@ onMounted(async () => {
   border-style: solid;
 }
 
-.box3 {
+.div-logging {
   grid-column: 2 / 3;
   grid-row: 2 / 4;
   border: lightgray;
@@ -587,7 +587,7 @@ onMounted(async () => {
   border-style: solid;
 }
 
-.box4 {
+.div-status-line {
   grid-column: 1 / 3;
   grid-row: 4 / 5;
   background-color: #e5e5e5;
@@ -604,7 +604,7 @@ button {
 }
 
 .logging {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: monospace;
   height: 100%;
   width: 100%;
   font-size: 13px;

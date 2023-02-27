@@ -3,36 +3,41 @@
     windows_subsystem = "windows"
 )]
 
+mod statistics_handler;
+mod util;
 mod v2ray_handler;
 
+use statistics_handler::StatisticsHandler;
 use tauri::{
-    CustomMenuItem, Manager, RunEvent, State, SystemTray, SystemTrayEvent, SystemTrayMenu, Window,
-    WindowEvent, SystemTrayMenuItem,
+    CustomMenuItem, Manager, RunEvent, State, SystemTray, SystemTrayEvent, SystemTrayMenu,
+    SystemTrayMenuItem, Window, WindowEvent,
 };
 use v2ray_handler::V2rayHandler;
 
-#[derive(Clone, serde::Serialize)]
-struct Payload {
-    m_type: u8,
-    message: String,
-}
-
 #[tauri::command]
-fn v2ray_connect(
-    state: State<'_, V2rayHandler>,
+async fn v2ray_connect(
+    v_h: State<'_, V2rayHandler>,
+    s_h: State<'_, StatisticsHandler>,
     window: Window,
     path: String,
 ) -> Result<(), String> {
-    state.start(window, path)
+    v_h.start(&window, path)?;
+    s_h.start(&window).await.map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-fn v2ray_disconnect(state: State<'_, V2rayHandler>, window: Window) {
-    state.stop_and_emit(&window);
+async fn v2ray_disconnect(
+    v_h: State<'_, V2rayHandler>,
+    s_h: State<'_, StatisticsHandler>,
+    window: Window,
+) -> Result<(), String> {
+    v_h.stop_and_emit(&window);
+    s_h.stop().await.map_err(|e| e.to_string())
 }
 
 fn main() {
     let v_handler = V2rayHandler::new();
+    let s_handler = StatisticsHandler::new();
 
     let tray_menu = SystemTrayMenu::new()
         .add_item(CustomMenuItem::new("show".to_string(), "Show"))
@@ -45,6 +50,7 @@ fn main() {
 
     tauri::Builder::default()
         .manage(v_handler)
+        .manage(s_handler)
         .system_tray(system_tray)
         .on_system_tray_event(|app_handle, event| match event {
             SystemTrayEvent::DoubleClick { .. } => {
@@ -84,6 +90,7 @@ fn main() {
             },
             RunEvent::ExitRequested { .. } => {
                 let _ = app_handle.state::<V2rayHandler>().stop();
+                let _ = app_handle.state::<StatisticsHandler>().stop();
             }
             _ => {}
         });

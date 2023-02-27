@@ -11,7 +11,7 @@
 
 <style scoped>
 .logging {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: monospace;
   height: 100%;
   width: 100%;
   font-size: 13px;
