@@ -1,6 +1,10 @@
 syntax = "proto3";
 
-package statistics;
+package xray.app.stats.command;
+option csharp_namespace = "Xray.App.Stats.Command";
+option go_package = "github.com/xtls/xray-core/app/stats/command";
+option java_package = "com.xray.app.stats.command";
+option java_multiple_files = true;
 
 message GetStatsRequest {
   string name = 1;

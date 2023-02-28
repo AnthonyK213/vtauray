@@ -1,4 +1,5 @@
 use crate::util::*;
+use chrono;
 use statistics::stats_service_client::StatsServiceClient;
 use statistics::{
     GetStatsRequest, GetStatsResponse, QueryStatsRequest, QueryStatsResponse, SysStatsRequest,
@@ -12,7 +13,7 @@ use tokio::sync::Mutex;
 use tonic::{transport::Channel, Request, Response, Status};
 
 pub mod statistics {
-    tonic::include_proto!("statistics");
+    tonic::include_proto!("xray.app.stats.command");
 }
 
 pub struct StatisticsHandler {
@@ -29,24 +30,39 @@ impl StatisticsHandler {
     pub async fn start(&self, window: &Window) -> Result<(), Status> {
         let mut lock = self.client.lock().await;
         if !lock.is_none() {
-            return Ok(())
+            return Ok(());
         }
+        let mut zanki: u8 = 10;
         while lock.is_none() {
-            *lock = StatsServiceClient::connect("http://127.0.0.1:10809").await.ok();
+            if let Some(port) = get_available_port() {
+                *lock = StatsServiceClient::connect(format!("http://127.0.0.1:{}", port))
+                    .await
+                    .ok();
+                log!("Port {} is available", port);
+            } else {
+                log!("No port is available");
+                return Err(Status::unavailable("No port is available"));
+            }
 
-            #[cfg(debug_assertions)]
-            let _ = emit_logging(window, 1, "I'm trying!!".into());
+            zanki -= 1;
+
+            if zanki == 0 {
+                log!("Failed to connect to grpc");
+                return Err(Status::unavailable("Failed to connect to grpc"));
+            }
+
+            log!("I'm trying!");
 
             thread::sleep(Duration::from_millis(200));
         }
 
-        #[cfg(debug_assertions)]
-        let _ = emit_logging(window, 1, "Grpc is connected!".into());
+        log!("Grpc is connected!");
 
         if lock.is_none() {
             Err(Status::unavailable("Client is invalid"))
         } else {
-            self.run(window).await?;
+            drop(lock);
+            self.run(window, 1000).await?;
             Ok(())
         }
     }
@@ -56,32 +72,46 @@ impl StatisticsHandler {
         if let Some(client) = &mut *lock {
             drop(client);
             *lock = None;
+            log!("Grpc is disconnected!");
         }
         Ok(())
     }
 
-    async fn run(&self, window: &Window) -> Result<(), Status> {
+    async fn run(&self, window: &Window, interval: u64) -> Result<(), Status> {
         loop {
-            if let Ok(response) = self
-                .get_stats(Request::new(GetStatsRequest {
-                    name: "".into(),
+            // log!("I'm in~");
+
+            match self
+                .query_stats(Request::new(QueryStatsRequest {
+                    pattern: "".into(),
                     reset: true,
                 }))
                 .await
             {
-                let message = String::from(&response.get_ref().stat.as_ref().unwrap().value.to_string());
-                thread::sleep(Duration::from_millis(1000));
-
-                #[cfg(debug_assertions)]
-                let _ = emit_logging(window, 1, message);
-                #[cfg(debug_assertions)]
-                let _ = emit_logging(window, 1, "Looping".into());
-            } else {
-                return Err(Status::unknown("Response is invalid"));
+                Ok(response) => {
+                    let stat = &response.get_ref().stat;
+                    let mut downlink = 0;
+                    for item in stat {
+                        if item.name == "outbound>>>proxy>>>traffic>>>downlink".to_string() {
+                            downlink = item.value;
+                        }
+                    }
+                    log!(
+                        "Downlink: {}",
+                        bandwitdh_display(downlink, interval).unwrap_or("0.000 KB/s".into())
+                    );
+                    thread::sleep(Duration::from_millis(interval));
+                    log!();
+                }
+                Err(e) => {
+                    log!("{:?}", e);
+                    return Err(Status::unknown("Response is invalid"));
+                }
             }
         }
     }
 
+    #[allow(dead_code)]
     async fn get_stats(
         &self,
         request: Request<GetStatsRequest>,
@@ -112,6 +142,7 @@ impl StatisticsHandler {
         }
     }
 
+    #[allow(dead_code)]
     async fn get_sys_stats(
         &self,
         request: Request<SysStatsRequest>,

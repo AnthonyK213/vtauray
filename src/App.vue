@@ -88,8 +88,10 @@ async function v2rayConfig() {
   let config = {
     "policy": {
       "system": {
-        "statsOutboundUplink": true,
-        "statsOutboundDownlink": true
+        "statsInboundDownlink": true,
+        "statsInboundUplink": true,
+        "statsOutboundDownlink": true,
+        "statsOutboundUplink": true
       }
     },
     "log": {
