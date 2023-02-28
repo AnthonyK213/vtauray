@@ -97,7 +97,6 @@ impl StatisticsHandler {
                     }
                     let bandwidth =
                         bandwitdh_display(downlink, interval).unwrap_or(BandWidth::KB(0.0));
-                    // log!("Downlink: {}", bandwidth);
                     let _ = emit_stats(
                         window,
                         StatsPayload {
@@ -105,7 +104,8 @@ impl StatisticsHandler {
                         },
                     );
                     thread::sleep(Duration::from_millis(interval));
-                    log!();
+                    // log!("Downlink: {}", bandwidth);
+                    // log!();
                 }
                 Err(e) => {
                     log!("{:?}", e);

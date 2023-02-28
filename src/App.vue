@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import { Event, listen } from '@tauri-apps/api/event';
 import { readTextFile, writeTextFile } from '@tauri-apps/api/fs';
 import { configDir } from '@tauri-apps/api/path';
 import { confirm } from '@tauri-apps/api/dialog';
 import { ref, onMounted, nextTick } from 'vue';
-import { invoke } from "@tauri-apps/api/tauri";
+import { AppConfig, VmessItem } from './interface'
+import { vConnect, vDisconnect } from './lib'
+import StatusLine from './components/StatusLine.vue';
+import Log from './components/Log.vue';
 
 let vAppConfigPath: string
 let vConfigPath: string;
 let vAppConfig: AppConfig;
-const vLogging = ref<HTMLDivElement | null>(null);
 const vServers = ref<VmessItem[]>([]);
 const vServerSelect = ref<HTMLSelectElement | null>(null);
 
@@ -22,68 +23,8 @@ const vServerPath = ref('');
 const vServerStreamSecurity = ref('');
 const vServerAllowInsecure = ref('');
 const vServerAlpn = ref('');
-const vSpeed = ref('');
 
 const vAppConfigPort = ref(7890);
-
-interface Payload {
-  m_type: number,
-  message: string,
-}
-
-interface StatisPayload {
-  outbound_proxy_traffic_downlink_speed: string,
-}
-
-interface InboundItem {
-  localPort: number,
-  protocol: string,
-}
-
-interface VmessItem {
-  indexId: string,
-  configType: number,
-  configVersion: number,
-  sort: number,
-  address: string,
-  port: number,
-  id: string,
-  alterId: number,
-  security: string,
-  network: string,
-  remarks: string,
-  headerType: string,
-  requestHost: string,
-  path: string,
-  streamSecurity: string,
-  allowInsecure: string,
-  testResult: string,
-  subid: string,
-  flow: string,
-  sni: string,
-  alpn: string[],
-  groupId: string,
-  coreType: number,
-  preSocksPort: number,
-}
-
-interface AppConfig {
-  indexId: string,
-  inbound: InboundItem[],
-  vmess: VmessItem[],
-}
-
-/* backend */
-
-async function vConnect() {
-  await invoke("v2ray_connect", { path: vConfigPath }).catch((e) => console.log(e));
-}
-
-async function vDisconnect() {
-  await invoke("v2ray_disconnect");
-}
-
-/* frontend */
 
 async function v2rayConfig() {
   if (!vServerSelect.value || vServerSelect.value.selectedIndex < 0) {
@@ -312,7 +253,7 @@ async function v2rayConfig() {
 
 async function v2rayConnect() {
   await v2rayConfig();
-  await vConnect();
+  await vConnect(vConfigPath);
 }
 
 async function v2rayDisconnect() {
@@ -417,24 +358,6 @@ function serverFind(indexId: string) {
 }
 
 onMounted(async () => {
-  listen('v-logging', (event: Event<Payload>) => {
-    let colors = ["black", "orange", "red"];
-    const { m_type, message } = event.payload;
-    let log = `<p style="color:${colors[m_type]};">${message}</p>`;
-    if (vLogging.value == null) return;
-    if (vLogging.value.innerHTML.length >= 65001) {
-      vLogging.value.innerHTML = log;
-    } else {
-      vLogging.value.innerHTML += log;
-    }
-    vLogging.value.scrollTop = vLogging.value.scrollHeight;
-  });
-
-  listen('v-stats', (event: Event<StatisPayload>) => {
-    const { outbound_proxy_traffic_downlink_speed } = event.payload;
-    vSpeed.value = outbound_proxy_traffic_downlink_speed;
-  });
-
   const configDirectory = (await configDir()) + "vtauray/";
   vAppConfigPath = configDirectory + "guiNConfig.json";
   vConfigPath = configDirectory + "config.json";
@@ -529,17 +452,11 @@ onMounted(async () => {
     </div>
 
     <div class="div-logging">
-      <div class="logging" id="v-logging" ref="vLogging" contenteditable="false">
-        <p style="color: orange;">
-          Hello, vtauray!
-        </p>
-      </div>
+      <Log />
     </div>
 
     <div class="div-status-line">
-      <p style="color: black;">
-        {{ vSpeed }}
-      </p>
+      <StatusLine />
     </div>
   </div>
 </template>
@@ -613,24 +530,6 @@ button {
   align-content: center;
   float: left;
   height: 20px;
-}
-
-.logging {
-  font-family: monospace;
-  height: 100%;
-  width: 100%;
-  font-size: 13px;
-  overflow: scroll;
-  overflow-wrap: normal;
-  overflow-x: scroll;
-  resize: none;
-  background-color: white;
-  color: black;
-  margin-left: auto;
-  margin-right: auto;
-  display: block;
-  border-radius: 5px;
-  border-color: lightgray;
 }
 
 .servers {

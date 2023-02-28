@@ -89,8 +89,8 @@ fn main() {
                 _ => {}
             },
             RunEvent::ExitRequested { .. } => {
-                let _ = app_handle.state::<V2rayHandler>().stop();
                 let _ = app_handle.state::<StatisticsHandler>().stop();
+                let _ = app_handle.state::<V2rayHandler>().stop();
             }
             _ => {}
         });

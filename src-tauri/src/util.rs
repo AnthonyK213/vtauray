@@ -15,7 +15,7 @@ pub struct StatsPayload {
 
 #[allow(unused)]
 pub enum BandWidth {
-    B(usize),
+    B(f32),
     KB(f32),
     MB(f32),
 }
@@ -23,7 +23,7 @@ pub enum BandWidth {
 impl Display for BandWidth {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            B(m) => write!(f, "{} B/s", m),
+            B(m) => write!(f, "{:.1} B/s", m),
             KB(m) => write!(f, "{:.1} KB/s", m),
             MB(m) => write!(f, "{:.1} MB/s", m),
         }
@@ -65,11 +65,13 @@ pub fn bandwitdh_display(amount_in_bit: i64, interval_in_ms: u64) -> Option<Band
     if amount_in_bit < 0 || interval_in_ms <= 0 {
         None
     } else {
-        let speed = amount_in_bit as f32 * 0.1220703125 / interval_in_ms as f32;
+        let speed = amount_in_bit as f32 * 125.0 / interval_in_ms as f32;
         if speed < 900.0 {
-            Some(KB(speed))
+            Some(B(speed))
+        } else if speed < 900.0 * 1024.0 {
+            Some(KB(speed / 1024.0))
         } else {
-            Some(MB(speed / 1024.0))
+            Some(MB(speed / 1024.0 / 1024.0))
         }
     }
 }
