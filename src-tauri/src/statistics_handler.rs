@@ -20,6 +20,7 @@ pub struct StatisticsHandler {
     client: Arc<Mutex<Option<StatsServiceClient<Channel>>>>,
 }
 
+#[allow(unused)]
 impl StatisticsHandler {
     pub fn new() -> Self {
         Self {
@@ -96,7 +97,7 @@ impl StatisticsHandler {
                     }
                     let bandwidth =
                         bandwitdh_display(downlink, interval).unwrap_or(BandWidth::KB(0.0));
-                    log!("Downlink: {}", bandwidth);
+                    // log!("Downlink: {}", bandwidth);
                     let _ = emit_stats(
                         window,
                         StatsPayload {
@@ -114,7 +115,6 @@ impl StatisticsHandler {
         }
     }
 
-    #[allow(dead_code)]
     async fn get_stats(
         &self,
         request: Request<GetStatsRequest>,
@@ -145,7 +145,6 @@ impl StatisticsHandler {
         }
     }
 
-    #[allow(dead_code)]
     async fn get_sys_stats(
         &self,
         request: Request<SysStatsRequest>,

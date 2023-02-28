@@ -13,6 +13,7 @@ pub struct StatsPayload {
     pub outbound_proxy_traffic_downlink_speed: String,
 }
 
+#[allow(unused)]
 pub enum BandWidth {
     B(usize),
     KB(f32),
