@@ -79,8 +79,6 @@ impl StatisticsHandler {
 
     async fn run(&self, window: &Window, interval: u64) -> Result<(), Status> {
         loop {
-            // log!("I'm in~");
-
             match self
                 .query_stats(Request::new(QueryStatsRequest {
                     pattern: "".into(),
@@ -96,9 +94,14 @@ impl StatisticsHandler {
                             downlink = item.value;
                         }
                     }
-                    log!(
-                        "Downlink: {}",
-                        bandwitdh_display(downlink, interval).unwrap_or("0.000 KB/s".into())
+                    let bandwidth =
+                        bandwitdh_display(downlink, interval).unwrap_or(BandWidth::KB(0.0));
+                    log!("Downlink: {}", bandwidth);
+                    let _ = emit_stats(
+                        window,
+                        StatsPayload {
+                            outbound_proxy_traffic_downlink_speed: format!("{}", bandwidth),
+                        },
                     );
                     thread::sleep(Duration::from_millis(interval));
                     log!();

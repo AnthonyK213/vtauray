@@ -22,12 +22,17 @@ const vServerPath = ref('');
 const vServerStreamSecurity = ref('');
 const vServerAllowInsecure = ref('');
 const vServerAlpn = ref('');
+const vSpeed = ref('');
 
 const vAppConfigPort = ref(7890);
 
 interface Payload {
   m_type: number,
   message: string,
+}
+
+interface StatisPayload {
+  outbound_proxy_traffic_downlink_speed: string,
 }
 
 interface InboundItem {
@@ -425,6 +430,11 @@ onMounted(async () => {
     vLogging.value.scrollTop = vLogging.value.scrollHeight;
   });
 
+  listen('v-stats', (event: Event<StatisPayload>) => {
+    const { outbound_proxy_traffic_downlink_speed } = event.payload;
+    vSpeed.value = outbound_proxy_traffic_downlink_speed;
+  });
+
   const configDirectory = (await configDir()) + "vtauray/";
   vAppConfigPath = configDirectory + "guiNConfig.json";
   vConfigPath = configDirectory + "config.json";
@@ -528,7 +538,7 @@ onMounted(async () => {
 
     <div class="div-status-line">
       <p style="color: black;">
-        Status Bar
+        {{ vSpeed }}
       </p>
     </div>
   </div>
