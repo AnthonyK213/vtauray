@@ -1,16 +1,18 @@
 <script setup lang="ts">
+import { Event, listen } from '@tauri-apps/api/event';
 import { readTextFile, writeTextFile } from '@tauri-apps/api/fs';
 import { configDir } from '@tauri-apps/api/path';
 import { confirm } from '@tauri-apps/api/dialog';
 import { ref, onMounted, nextTick } from 'vue';
-import { AppConfig, VmessItem } from './interface'
+import { VAppConfig, VmessItem } from './interface'
 import { vConnect, vDisconnect } from './lib'
+import Helm from './components/Helm.vue'
 import StatusLine from './components/StatusLine.vue';
 import Log from './components/Log.vue';
 
 let vAppConfigPath: string
 let vConfigPath: string;
-let vAppConfig: AppConfig;
+let vAppConfig: VAppConfig;
 const vServers = ref<VmessItem[]>([]);
 const vServerSelect = ref<HTMLSelectElement | null>(null);
 
@@ -367,6 +369,10 @@ onMounted(async () => {
 
   vServers.value = vAppConfig.vmess;
   vAppConfigPort.value = vAppConfig.inbound[0].localPort;
+
+  listen('v-connect', (_: Event<number>) => v2rayConnect());
+  listen('v-disconnect', (_: Event<number>) => v2rayDisconnect());
+
   await nextTick();
   serverSelect();
 });
@@ -375,11 +381,8 @@ onMounted(async () => {
 <template>
   <div class="grid-container">
     <div class="div-helm">
-      <button id="v-undo" style="width: 20px;" @click="v2rayConfig">&lt;</button>
-      <button id="v-rmv-server" style="width: 20px;" @click="serverRemove">-</button>
-      <button id="v-add-server" style="width: 20px;" @click="serverAdd">+</button>
-      <button id="v-disconnect" @click="v2rayDisconnect" style="width: 85px;">disconnect</button>
-      <button id="v-connect" @click="v2rayConnect" style="width: 80px;">connect</button>
+      <Helm @e-undo="" @e-rmv-server="serverRemove" @e-add-server="serverAdd" @e-disconnect="v2rayDisconnect"
+        @e-connect="v2rayConnect" />
     </div>
 
     <div class="div-server-list">
@@ -520,16 +523,6 @@ onMounted(async () => {
   grid-column: 1 / 3;
   grid-row: 4 / 5;
   background-color: #e5e5e5;
-}
-
-button {
-  display: block;
-  margin-left: 3px;
-  margin-right: 3px;
-  font-size: 13px;
-  align-content: center;
-  float: left;
-  height: 20px;
 }
 
 .servers {

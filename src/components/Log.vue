@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { Payload } from '../interface';
+import { LogPayload } from '../interface';
 import { Event, listen } from '@tauri-apps/api/event';
 
 const vLogging = ref<HTMLDivElement | null>(null);
 
 onMounted(async () => {
-  listen('v-logging', (event: Event<Payload>) => {
+  listen('v-logging', (event: Event<LogPayload>) => {
     let colors = ["black", "orange", "red"];
     const { m_type, message } = event.payload;
     let log = `<p style="color:${colors[m_type]};">${message}</p>`;

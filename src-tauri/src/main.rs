@@ -12,6 +12,7 @@ use tauri::{
     CustomMenuItem, Manager, RunEvent, State, SystemTray, SystemTrayEvent, SystemTrayMenu,
     SystemTrayMenuItem, Window, WindowEvent,
 };
+// use util::EmptyPayload;
 use v2ray_handler::V2rayHandler;
 
 #[tauri::command]
@@ -57,14 +58,21 @@ fn main() {
                 app_handle.get_window("main").unwrap().show().unwrap();
             }
             SystemTrayEvent::MenuItemClick { id, .. } => {
-                let s: State<V2rayHandler> = app_handle.state();
+                // let v: State<V2rayHandler> = app_handle.state();
+                // let s: State<StatisticsHandler> = app_handle.state();
                 match id.as_str() {
                     "show" => {
                         app_handle.get_window("main").unwrap().show().unwrap();
                     }
-                    "connect" => {}
+                    "connect" => {
+                        if let Some(window) = app_handle.get_window("main") {
+                            let _ = window.emit("v-connect", 0);
+                        }
+                    }
                     "disconnect" => {
-                        let _ = s.stop();
+                        if let Some(window) = app_handle.get_window("main") {
+                            let _ = window.emit("v-disconnect", 0);
+                        }
                     }
                     "quit" => {
                         app_handle.exit(0);

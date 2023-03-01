@@ -1,6 +1,12 @@
-export interface Payload {
+// export interface EmptyPayload { }
+
+export interface LogPayload {
   m_type: number,
   message: string,
+}
+
+export interface StatsPayload {
+    outbound_proxy_traffic_downlink_speed: string,
 }
 
 export interface InboundItem {
@@ -35,12 +41,8 @@ export interface VmessItem {
   preSocksPort: number,
 }
 
-export interface AppConfig {
+export interface VAppConfig {
   indexId: string,
   inbound: InboundItem[],
   vmess: VmessItem[],
-}
-
-export interface StatsPayload {
-    outbound_proxy_traffic_downlink_speed: string,
 }

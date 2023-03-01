@@ -2,8 +2,11 @@ use std::fmt::Display;
 use tauri::Window;
 use BandWidth::*;
 
+// #[derive(Clone, serde::Serialize)]
+// pub struct EmptyPayload {}
+
 #[derive(Clone, serde::Serialize)]
-pub struct Payload {
+pub struct LogPayload {
     m_type: u8,
     message: String,
 }
@@ -42,7 +45,7 @@ pub fn escape_html(string: String) -> String {
 pub fn emit_logging(window: &Window, m_type: u8, message: String) -> tauri::Result<()> {
     window.emit(
         "v-logging",
-        Payload {
+        LogPayload {
             m_type,
             message: escape_html(message),
         },
