@@ -12,7 +12,6 @@ use tauri::{
     CustomMenuItem, Manager, RunEvent, State, SystemTray, SystemTrayEvent, SystemTrayMenu,
     SystemTrayMenuItem, Window, WindowEvent,
 };
-// use util::EmptyPayload;
 use v2ray_handler::V2rayHandler;
 
 #[tauri::command]

@@ -2,9 +2,6 @@ use std::fmt::Display;
 use tauri::Window;
 use BandWidth::*;
 
-// #[derive(Clone, serde::Serialize)]
-// pub struct EmptyPayload {}
-
 #[derive(Clone, serde::Serialize)]
 pub struct LogPayload {
     m_type: u8,

@@ -1,5 +1,3 @@
-// export interface EmptyPayload { }
-
 export interface LogPayload {
   m_type: number,
   message: string,
