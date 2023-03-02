@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Event, listen } from '@tauri-apps/api/event';
 import { readTextFile, writeTextFile } from '@tauri-apps/api/fs';
+import { exit } from '@tauri-apps/api/process';
 import { configDir } from '@tauri-apps/api/path';
 import { confirm } from '@tauri-apps/api/dialog';
 import { ref, onMounted, nextTick } from 'vue';
@@ -359,6 +360,12 @@ function serverFind(indexId: string) {
   }
 }
 
+async function appExit() {
+  if (await confirm("Exit?")) {
+    await exit()
+  }
+}
+
 onMounted(async () => {
   const configDirectory = (await configDir()) + "vtauray/";
   vAppConfigPath = configDirectory + "guiNConfig.json";
@@ -381,7 +388,7 @@ onMounted(async () => {
 <template>
   <div class="grid-container">
     <div class="div-helm">
-      <Helm @e-undo="" @e-rmv-server="serverRemove" @e-add-server="serverAdd" @e-disconnect="v2rayDisconnect"
+      <Helm @e-exit="appExit" @e-rmv-server="serverRemove" @e-add-server="serverAdd" @e-disconnect="v2rayDisconnect"
         @e-connect="v2rayConnect" />
     </div>
 

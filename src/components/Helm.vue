@@ -1,6 +1,6 @@
 <script setup lang="ts">
 defineEmits<{
-  (e: 'eUndo'): void,
+  (e: 'eExit'): void,
   (e: 'eRmvServer'): void,
   (e: 'eAddServer'): void,
   (e: 'eDisconnect'): void,
@@ -9,7 +9,7 @@ defineEmits<{
 </script>
 
 <template>
-  <button id="v-undo" style="width: 20px;" @click="$emit('eUndo')">&lt;</button>
+  <button id="v-exit" style="width: 20px;" @click="$emit('eExit')">x</button>
   <button id="v-rmv-server" style="width: 20px;" @click="$emit('eRmvServer')">-</button>
   <button id="v-add-server" style="width: 20px;" @click="$emit('eAddServer')">+</button>
   <button id="v-disconnect" @click="$emit('eDisconnect')" style="width: 85px;">disconnect</button>

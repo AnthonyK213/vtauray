@@ -39,6 +39,10 @@
       },
       "path": {
         "all": true
+      },
+      "process": {
+        "all": false,
+        "exit": true
       }
     },
     "bundle": {
