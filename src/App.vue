@@ -6,7 +6,7 @@ import { configDir } from '@tauri-apps/api/path';
 import { confirm } from '@tauri-apps/api/dialog';
 import { ref, onMounted, nextTick } from 'vue';
 import { VAppConfig, VmessItem } from './interface'
-import { vConnect, vDisconnect } from './lib'
+import { vConnect, vDisconnect, xUpdate } from './lib'
 import Helm from './components/Helm.vue'
 import StatusLine from './components/StatusLine.vue';
 import Log from './components/Log.vue';
@@ -407,6 +407,7 @@ onMounted(async () => {
         <label class="label" for="tab-1">vtauray</label>
         <div class="panel">
           <img src="./assets/vue.svg">
+          <button id="x-update" style="width: 100px;" @click="xUpdate">Update</button>
         </div>
         <input class="input" name="tabs" type="radio" id="tab-2" />
         <label class="label" for="tab-2">server</label>

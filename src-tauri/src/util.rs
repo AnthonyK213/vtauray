@@ -13,11 +13,13 @@ pub struct StatsPayload {
     pub outbound_proxy_traffic_downlink_speed: String,
 }
 
+/// Amount of data transfered per **second**.
 #[allow(unused)]
 pub enum BandWidth {
     B(f32),
     KB(f32),
     MB(f32),
+    GB(f32), // 牛逼
 }
 
 impl Display for BandWidth {
@@ -26,6 +28,7 @@ impl Display for BandWidth {
             B(m) => write!(f, "{:.1} B/s", m),
             KB(m) => write!(f, "{:.1} KB/s", m),
             MB(m) => write!(f, "{:.1} MB/s", m),
+            GB(m) => write!(f, "{:.1} GB/s", m),
         }
     }
 }
@@ -65,14 +68,25 @@ pub fn bandwitdh_display(amount_in_bit: i64, interval_in_ms: u64) -> Option<Band
     if amount_in_bit < 0 || interval_in_ms <= 0 {
         None
     } else {
-        let speed = amount_in_bit as f32 * 125.0 / interval_in_ms as f32;
-        if speed < 900.0 {
-            Some(B(speed))
-        } else if speed < 900.0 * 1024.0 {
-            Some(KB(speed / 1024.0))
-        } else {
-            Some(MB(speed / 1024.0 / 1024.0))
+        let mut speed = amount_in_bit as f32 * 125.0 / interval_in_ms as f32;
+
+        if speed < 1024.0 {
+            return Some(B(speed));
         }
+
+        speed /= 1024.0;
+
+        if speed < 1024.0 {
+            return Some(KB(speed));
+        }
+
+        speed /= 1024.0;
+
+        if speed < 1024.0 {
+            return Some(MB(speed));
+        }
+
+        Some(GB(speed))
     }
 }
 

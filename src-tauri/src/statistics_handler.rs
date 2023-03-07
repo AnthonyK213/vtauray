@@ -104,8 +104,6 @@ impl StatisticsHandler {
                         },
                     );
                     thread::sleep(Duration::from_millis(interval));
-                    // log!("Downlink: {}", bandwidth);
-                    // log!();
                 }
                 Err(e) => {
                     log!("{:?}", e);

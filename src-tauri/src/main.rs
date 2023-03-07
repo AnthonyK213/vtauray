@@ -6,6 +6,7 @@
 mod statistics_handler;
 mod util;
 mod v2ray_handler;
+mod xray_update_handler;
 
 use statistics_handler::StatisticsHandler;
 use tauri::{
@@ -13,6 +14,7 @@ use tauri::{
     SystemTrayMenuItem, Window, WindowEvent,
 };
 use v2ray_handler::V2rayHandler;
+use xray_update_handler::XrayUpdateHandler;
 
 #[tauri::command]
 async fn v2ray_connect(
@@ -35,9 +37,23 @@ async fn v2ray_disconnect(
     s_h.stop().await.map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+async fn xray_update(
+    v_h: State<'_, V2rayHandler>,
+    s_h: State<'_, StatisticsHandler>,
+    x_h: State<'_, XrayUpdateHandler>,
+    window: Window,
+) -> Result<(), String> {
+    v2ray_disconnect(v_h, s_h, window.clone())
+        .await
+        .map_err(|e| e.to_string())?;
+    x_h.update(&window).await.map_err(|e| e.to_string())
+}
+
 fn main() {
     let v_handler = V2rayHandler::new();
     let s_handler = StatisticsHandler::new();
+    let x_handler = XrayUpdateHandler::new();
 
     let tray_menu = SystemTrayMenu::new()
         .add_item(CustomMenuItem::new("show".to_string(), "Show"))
@@ -51,37 +67,38 @@ fn main() {
     tauri::Builder::default()
         .manage(v_handler)
         .manage(s_handler)
+        .manage(x_handler)
         .system_tray(system_tray)
         .on_system_tray_event(|app_handle, event| match event {
             SystemTrayEvent::DoubleClick { .. } => {
                 app_handle.get_window("main").unwrap().show().unwrap();
             }
-            SystemTrayEvent::MenuItemClick { id, .. } => {
-                // let v: State<V2rayHandler> = app_handle.state();
-                // let s: State<StatisticsHandler> = app_handle.state();
-                match id.as_str() {
-                    "show" => {
-                        app_handle.get_window("main").unwrap().show().unwrap();
-                    }
-                    "connect" => {
-                        if let Some(window) = app_handle.get_window("main") {
-                            let _ = window.emit("v-connect", 0);
-                        }
-                    }
-                    "disconnect" => {
-                        if let Some(window) = app_handle.get_window("main") {
-                            let _ = window.emit("v-disconnect", 0);
-                        }
-                    }
-                    "quit" => {
-                        app_handle.exit(0);
-                    }
-                    _ => {}
+            SystemTrayEvent::MenuItemClick { id, .. } => match id.as_str() {
+                "show" => {
+                    app_handle.get_window("main").unwrap().show().unwrap();
                 }
-            }
+                "connect" => {
+                    if let Some(window) = app_handle.get_window("main") {
+                        let _ = window.emit("v-connect", 0);
+                    }
+                }
+                "disconnect" => {
+                    if let Some(window) = app_handle.get_window("main") {
+                        let _ = window.emit("v-disconnect", 0);
+                    }
+                }
+                "quit" => {
+                    app_handle.exit(0);
+                }
+                _ => {}
+            },
             _ => {}
         })
-        .invoke_handler(tauri::generate_handler![v2ray_connect, v2ray_disconnect])
+        .invoke_handler(tauri::generate_handler![
+            v2ray_connect,
+            v2ray_disconnect,
+            xray_update
+        ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|app_handle, event| match event {

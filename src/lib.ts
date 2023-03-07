@@ -7,3 +7,7 @@ export async function vConnect(vConfigPath: string) {
 export async function vDisconnect() {
   await invoke("v2ray_disconnect");
 }
+
+export async function xUpdate() {
+  await invoke("xray_update");
+}
