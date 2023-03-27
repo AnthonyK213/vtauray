@@ -406,7 +406,7 @@ onMounted(async () => {
         <input class="input" name="tabs" type="radio" id="tab-1" checked />
         <label class="label" for="tab-1">vtauray</label>
         <div class="panel">
-          <img src="./assets/vue.svg">
+          <!-- <img src="./assets/vtauray512.svg"> -->
           <button id="x-update" style="width: 100px;" @click="xUpdate">Update</button>
         </div>
         <input class="input" name="tabs" type="radio" id="tab-2" />
