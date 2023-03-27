@@ -89,12 +89,14 @@ impl StatisticsHandler {
             {
                 Ok(response) => {
                     let stat = &response.get_ref().stat;
-                    let mut downlink = 0;
-                    for item in stat {
-                        if item.name == "outbound>>>proxy>>>traffic>>>downlink".to_string() {
-                            downlink = item.value;
-                        }
-                    }
+                    let downlink = if let Some(s) = stat
+                        .iter()
+                        .find(|item| item.name.eq("outbound>>>proxy>>>traffic>>>downlink"))
+                    {
+                        s.value
+                    } else {
+                        0
+                    };
                     let bandwidth =
                         bandwitdh_display(downlink, interval).unwrap_or(BandWidth::KB(0.0));
                     let _ = emit_stats(

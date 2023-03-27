@@ -1,12 +1,10 @@
 use std::{io::copy, path::PathBuf};
-
 use crate::util::*;
 use anyhow::Result;
 use reqwest;
 use std::fs::File;
 use tauri::api::path::*;
 use tauri::window::Window;
-use tokio;
 
 pub struct XrayUpdateHandler {}
 
@@ -15,7 +13,7 @@ impl XrayUpdateHandler {
         Self {}
     }
 
-    pub async fn update(&self, window: &Window) -> Result<()> {
+    pub async fn update(&self, _: &Window) -> Result<()> {
         let url = "https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip";
         if let Some(path) = config_dir() {
             let mut config_path_buf = PathBuf::from(path);
