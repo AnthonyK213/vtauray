@@ -21,9 +21,15 @@ const vServerRemarks = ref('');
 const vServerAddress = ref('');
 const vServerPort = ref(443);
 const vServerId = ref('');
+const vServerFlow = ref('');
 const vServerNetwork = ref('');
 const vServerPath = ref('');
 const vServerStreamSecurity = ref('');
+const vServerSni = ref('');
+const vServerFingerPrint = ref('');
+const vServerPublicKey = ref('');
+const vServerShortId = ref('');
+const vServerSpiderX = ref('');
 const vServerAllowInsecure = ref('');
 const vServerAlpn = ref('');
 
@@ -285,6 +291,10 @@ async function serverAdd() {
     "subid": "",
     "flow": "",
     "sni": "",
+    "fingerprint": "",
+    "publicKey": "",
+    "shortId": "",
+    "spiderX": "",
     "alpn": [
       ""
     ],
@@ -318,11 +328,17 @@ function onSelectedServerChanged() {
   vServerAddress.value = vmessItem.address;
   vServerPort.value = vmessItem.port;
   vServerId.value = vmessItem.id;
+  vServerFlow.value = vmessItem.flow;
   vServerPath.value = vmessItem.path;
   vServerNetwork.value = vmessItem.network;
   vServerStreamSecurity.value = vmessItem.streamSecurity;
-  vServerAllowInsecure.value = vmessItem.allowInsecure;
+  vServerSni.value = vmessItem.sni;
+  vServerFingerPrint.value = vmessItem.fingerprint;
+  vServerPublicKey.value = vmessItem.publicKey;
+  vServerShortId.value = vmessItem.shortId;
+  vServerSpiderX.value = vmessItem.spiderX;
   vServerAlpn.value = vmessItem.alpn[0];
+  vServerAllowInsecure.value = vmessItem.allowInsecure;
 }
 
 async function applyServerConfig() {
@@ -332,11 +348,17 @@ async function applyServerConfig() {
     vmessItem.address = vServerAddress.value;
     vmessItem.port = vServerPort.value;
     vmessItem.id = vServerId.value;
+    vmessItem.flow = vServerFlow.value;
     vmessItem.path = vServerPath.value;
     vmessItem.network = vServerNetwork.value;
     vmessItem.streamSecurity = vServerStreamSecurity.value;
-    vmessItem.allowInsecure = vServerAllowInsecure.value;
+    vmessItem.sni = vServerSni.value;
+    vmessItem.fingerprint = vServerFingerPrint.value;
+    vmessItem.publicKey = vServerPublicKey.value;
+    vmessItem.shortId = vServerShortId.value;
+    vmessItem.spiderX = vServerSpiderX.value;
     vmessItem.alpn = [vServerAlpn.value];
+    vmessItem.allowInsecure = vServerAllowInsecure.value;
     await writeTextFile(vAppConfigPath, JSON.stringify(vAppConfig));
   }
 }
@@ -421,6 +443,12 @@ onMounted(async () => {
             <input type="text" id="v-server-port" v-model="vServerPort" />
             <label>用户ID(id)</label>
             <input type="text" id="v-server-id" v-model="vServerId" />
+            <label>流控(flow)</label>
+            <select id="v-server-flow" v-model="vServerFlow">
+              <option disabled value="">Please Select one</option>
+              <option value="xtls-rprx-vision">xtls-rprx-vision</option>
+              <option value="xtls-rprx-vision-udp443">xtls-rprx-vision-udp443</option>
+            </select>
             <label>传输协议(network)</label>
             <select id="v-server-network" v-model="vServerNetwork">
               <option disabled value="">Please Select one</option>
@@ -433,19 +461,37 @@ onMounted(async () => {
             <select id="v-server-streamSecurity" v-model="vServerStreamSecurity">
               <option disabled value="">Please Select one</option>
               <option value="tls">tls</option>
-              <option value="xtls">xtls</option>
+              <option value="reality">reality</option>
             </select>
-            <label>跳过证书验证(allowInsecure)</label>
-            <select id="v-server-allowInsecure" v-model="vServerAllowInsecure">
+            <label>SNI</label>
+            <input type="text" id="v-server-sni" v-model="vServerSni" />
+            <label>Fingerprint</label>
+            <select id="v-server-fingerprint" v-model="vServerFingerPrint">
               <option disabled value="">Please Select one</option>
-              <option value="true">true</option>
-              <option value="false">false</option>
+              <option value="chrome">chrome</option>
+              <option value="firefox">firefox</option>
+              <option value="edge">edge</option>
             </select>
-            <label>alpn</label>
-            <select id="v-server-alpn" v-model="vServerAlpn">
+            <label v-if="vServerStreamSecurity === 'reality'">PublicKey</label>
+            <input v-if="vServerStreamSecurity === 'reality'" type="text" id="v-server-publicKey"
+              v-model="vServerPublicKey" />
+            <label v-if="vServerStreamSecurity === 'reality'">ShortId</label>
+            <input v-if="vServerStreamSecurity === 'reality'" type="text" id="v-server-shortId"
+              v-model="vServerShortId" />
+            <label v-if="vServerStreamSecurity === 'reality'">SpiderX</label>
+            <input v-if="vServerStreamSecurity === 'reality'" type="text" id="v-server-spiderX"
+              v-model="vServerSpiderX" />
+            <label v-if="vServerStreamSecurity === 'tls'">alpn</label>
+            <select v-if="vServerStreamSecurity === 'tls'" id="v-server-alpn" v-model="vServerAlpn">
               <option disabled value="">Please Select one</option>
               <option value="http/1.1">http/1.1</option>
               <option value="h2">h2</option>
+            </select>
+            <label v-if="vServerStreamSecurity === 'tls'">跳过证书验证</label>
+            <select v-if="vServerStreamSecurity === 'tls'" id="v-server-allowInsecure" v-model="vServerAllowInsecure">
+              <option disabled value="">Please Select one</option>
+              <option value="true">true</option>
+              <option value="false">false</option>
             </select>
           </div>
           <button id="v-server-apply" @click="applyServerConfig">apply</button>
@@ -648,5 +694,4 @@ div.settings label:after {
 
 .input:checked+.label+.panel {
   display: block;
-}
-</style>
+}</style>
